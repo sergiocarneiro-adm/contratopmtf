@@ -191,13 +191,18 @@
       margin-bottom: 15px;
       border-radius: 4px;
     }
+
+    .year-btn.active {
+      background-color: var(--main-color) !important;
+      color: white !important;
+    }
   </style>
 </head>
 <body>
   <header class="d-flex justify-content-between align-items-center px-4">
     <h1><i class="bi bi-search"></i> Busca de Dados - Contratos PMTF</h1>
     <div class="d-flex align-items-center gap-3">
-      <span class="text-white small me-3">Atualizado até 02/10/2025</span>
+      <span class="text-white small me-3">Atualizado até 12/08/2025</span>
       <span class="theme-toggle" onclick="toggleTheme()" title="Alternar tema">
         <i class="bi bi-moon-stars-fill"></i>
       </span>
@@ -219,11 +224,11 @@
         autocomplete="off"
       />
       <div class="btn-group" role="group" aria-label="Filtro por ano" id="yearButtons">
-        <button type="button" class="btn btn-outline-fuchsia" onclick="toggleYear('2025')">2025</button>
-        <button type="button" class="btn btn-outline-fuchsia" onclick="toggleYear('2024')">2024</button>
-        <button type="button" class="btn btn-outline-fuchsia" onclick="toggleYear('2023')">2023</button>
-        <button type="button" class="btn btn-outline-fuchsia" onclick="toggleYear('2022')">2022</button>
-        <button type="button" class="btn btn-outline-fuchsia" onclick="toggleYear('2021')">2021</button>
+        <button type="button" class="btn btn-outline-fuchsia year-btn" data-year="2025">2025</button>
+        <button type="button" class="btn btn-outline-fuchsia year-btn" data-year="2024">2024</button>
+        <button type="button" class="btn btn-outline-fuchsia year-btn" data-year="2023">2023</button>
+        <button type="button" class="btn btn-outline-fuchsia year-btn" data-year="2022">2022</button>
+        <button type="button" class="btn btn-outline-fuchsia year-btn" data-year="2021">2021</button>
       </div>
       <button onclick="search()" class="btn btn-fuchsia">
         <i class="bi bi-search"></i> Buscar
@@ -355,18 +360,27 @@
       }
     }
 
-    // Função para alternar ano
+    // Função para alternar ano - CORRIGIDA
     function toggleYear(ano) {
-      const botoes = document.querySelectorAll('#yearButtons button');
-      anoSelecionado = anoSelecionado === ano ? '' : ano;
+      console.log('🎯 Alternando ano:', ano, 'Ano atual selecionado:', anoSelecionado);
       
+      // Se clicar no mesmo ano, desativa
+      if (anoSelecionado === ano) {
+        anoSelecionado = '';
+      } else {
+        anoSelecionado = ano;
+      }
+      
+      // Atualiza visual dos botões
+      const botoes = document.querySelectorAll('.year-btn');
       botoes.forEach((btn) => {
-        if (btn.textContent === anoSelecionado) {
+        const btnYear = btn.getAttribute('data-year');
+        if (btnYear === anoSelecionado) {
           btn.classList.remove('btn-outline-fuchsia');
-          btn.classList.add('btn-fuchsia');
+          btn.classList.add('btn-fuchsia', 'active');
         } else {
+          btn.classList.remove('btn-fuchsia', 'active');
           btn.classList.add('btn-outline-fuchsia');
-          btn.classList.remove('btn-fuchsia');
         }
       });
       
@@ -380,7 +394,25 @@
            Dados carregados! ${jsonData.length} abas disponíveis.`;
       }
       
+      console.log('🎯 Ano selecionado após toggle:', anoSelecionado);
       search();
+    }
+
+    // Função para extrair ano do contrato - NOVA FUNÇÃO
+    function extrairAnoDoContrato(contrato) {
+      if (!contrato) return '';
+      
+      const str = contrato.toString();
+      
+      // Tenta encontrar padrões de ano (4 dígitos)
+      const padraoAno = /(20\d{2})/;
+      const match = str.match(padraoAno);
+      
+      if (match) {
+        return match[1];
+      }
+      
+      return '';
     }
 
     // Função para escapar HTML
@@ -398,11 +430,13 @@
       return escapeHtml(text).replace(regex, '<mark>$1</mark>');
     }
 
-    // Função principal de busca
+    // Função principal de busca - CORRIGIDA
     function search() {
       const termo = document.getElementById('searchTerm').value.trim().toLowerCase();
       const resultDiv = document.getElementById('result');
       resultDiv.innerHTML = '';
+
+      console.log('🔍 Executando busca:', { termo, anoSelecionado });
 
       // Verifica se há dados carregados
       if (jsonData.length === 0) {
@@ -430,26 +464,38 @@
           col && col.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().includes('numero do contrato')
         );
 
+        console.log(`📊 Aba "${aba.aba}": Índice coluna contrato:`, colIndexContrato);
+
         let correspondencias;
 
         if (anoSelecionado && !termo) {
-          // Busca apenas por ano
+          // Busca apenas por ano - CORRIGIDA
           correspondencias = aba.linhas.filter((linha) => {
             if (colIndexContrato === -1) return false;
+            
             const contrato = linha[colIndexContrato] || '';
-            return contrato.toString().includes(anoSelecionado);
+            const anoContrato = extrairAnoDoContrato(contrato);
+            
+            console.log(`🔍 Comparando: ${anoContrato} === ${anoSelecionado}`, anoContrato === anoSelecionado);
+            
+            return anoContrato === anoSelecionado;
           });
         } else {
-          // Busca por termo e/ou ano
+          // Busca por termo e/ou ano - CORRIGIDA
           correspondencias = aba.linhas.filter((linha) => {
             const contrato = colIndexContrato !== -1 ? (linha[colIndexContrato] || '') : '';
-            const contemAno = !anoSelecionado || contrato.toString().includes(anoSelecionado);
+            const anoContrato = extrairAnoDoContrato(contrato);
+            
+            const contemAno = !anoSelecionado || anoContrato === anoSelecionado;
             const contemTermo = !termo || linha.some(campo => 
               campo && campo.toString().toLowerCase().includes(termo)
             );
+            
             return contemAno && contemTermo;
           });
         }
+
+        console.log(`📊 Aba "${aba.aba}": ${correspondencias.length} correspondências`);
 
         if (correspondencias.length > 0) {
           resultados.push({ 
@@ -460,6 +506,8 @@
           });
         }
       });
+
+      console.log('📈 Total de resultados:', resultados.length);
 
       if (resultados.length === 0) {
         resultDiv.innerHTML = 
@@ -523,7 +571,7 @@
       resultDiv.innerHTML += `
         <div class="alert alert-success mt-3" role="alert">
           <i class="bi bi-check-circle"></i> 
-          🔎 ${resultados.length} processo(s) encontrado(s)
+          🔎 ${resultados.reduce((total, item) => total + item.resultados.length, 0)} registro(s) encontrado(s) em ${resultados.length} aba(s)
           ${anoSelecionado ? ' para o ano ' + anoSelecionado : ''}
           ${termo ? ' com o termo "' + termo + '"' : ''}.
         </div>
@@ -534,6 +582,15 @@
     document.addEventListener('DOMContentLoaded', () => {
       console.log('🚀 Inicializando aplicação...');
       
+      // Configura eventos dos botões de ano
+      const yearButtons = document.querySelectorAll('.year-btn');
+      yearButtons.forEach(btn => {
+        btn.addEventListener('click', function() {
+          const year = this.getAttribute('data-year');
+          toggleYear(year);
+        });
+      });
+
       // Enter na busca
       document.getElementById('searchTerm').addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
