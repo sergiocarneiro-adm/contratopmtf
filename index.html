@@ -127,11 +127,10 @@
     }
     
     .col-objeto {
-      width: 40%; /* Máximo espaço para o objeto */
+      width: 40%;
       min-width: 200px;
     }
 
-    /* Compactar colunas de data */
     .col-celebracao,
     .col-inicio,
     .col-fim {
@@ -252,7 +251,6 @@
       color: white !important;
     }
 
-    /* Estilos para PDF */
     .pdf-loading {
       position: fixed;
       top: 50%;
@@ -268,7 +266,6 @@
       gap: 10px;
     }
 
-    /* Melhorias na responsividade */
     @media (max-width: 768px) {
       .col-numero-contrato,
       .col-licitacao {
@@ -374,7 +371,6 @@
       toggleExportButton(false);
       
       try {
-        // Adiciona timestamp para evitar cache
         const urlComCache = `${jsonUrl}?v=${new Date().getTime()}`;
         console.log('📡 Fazendo requisição para:', urlComCache);
         
@@ -402,7 +398,6 @@
         const data = await response.json();
         console.log('📊 Dados brutos recebidos:', data);
         
-        // Validação da estrutura do JSON
         if (!Array.isArray(data)) {
           throw new Error('Estrutura inválida: JSON deve ser um array');
         }
@@ -411,7 +406,6 @@
           throw new Error('JSON carregado mas está vazio');
         }
         
-        // Valida estrutura de cada aba
         data.forEach((aba, index) => {
           if (!aba.aba || !Array.isArray(aba.colunas) || !Array.isArray(aba.linhas)) {
             throw new Error(`Estrutura inválida na aba ${index}: deve ter propriedades 'aba', 'colunas' e 'linhas'`);
@@ -426,13 +420,11 @@
           totalLinhas: jsonData.reduce((total, aba) => total + aba.linhas.length, 0)
         });
         
-        // Atualiza status
         document.getElementById('statusInfo').innerHTML = 
           `<i class="bi bi-check-circle-fill text-success"></i> 
            Dados carregados com sucesso! ${jsonData.length} abas e 
            ${jsonData.reduce((total, aba) => total + aba.linhas.length, 0)} registros disponíveis.`;
         
-        // Mostra mensagem de sucesso
         document.getElementById('result').innerHTML = 
           `<div class="alert alert-success" role="alert">
             <h5><i class="bi bi-check-circle"></i> Dados carregados com sucesso!</h5>
@@ -552,6 +544,176 @@
       });
       
       return mapeamento;
+    }
+
+    // NOVA FUNÇÃO PARA GERAR PDF NO FORMATO DO PRINT
+    async function generatePDF() {
+      const loadingDiv = document.createElement('div');
+      loadingDiv.className = 'pdf-loading';
+      loadingDiv.innerHTML = '<div class="spinner-border spinner-border-sm me-2"></div>Gerando PDF...';
+      document.body.appendChild(loadingDiv);
+
+      try {
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        const pageWidth = pdf.internal.pageSize.getWidth();
+        const pageHeight = pdf.internal.pageSize.getHeight();
+        const margin = 15;
+        
+        let yPosition = margin;
+        let currentPage = 1;
+
+        // Informações da busca
+        const searchTerm = document.getElementById('searchTerm').value.trim();
+        const today = new Date().toLocaleDateString('pt-BR');
+        
+        // Cabeçalho do relatório
+        pdf.setFontSize(16);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text('RELATÓRIO DE CONTRATOS - PMTF', margin, yPosition);
+        
+        yPosition += 8;
+        
+        pdf.setFontSize(10);
+        pdf.setFont('helvetica', 'normal');
+        pdf.text(`Data de geração: ${today}`, margin, yPosition);
+        yPosition += 5;
+        
+        if (searchTerm) {
+          pdf.text(`Termo(s) de busca: "${searchTerm}"`, margin, yPosition);
+          yPosition += 5;
+        }
+        
+        if (anoSelecionado) {
+          pdf.text(`Ano filtrado: ${anoSelecionado}`, margin, yPosition);
+          yPosition += 5;
+        }
+        
+        yPosition += 8;
+
+        // Processar cada card de resultado
+        const cards = document.querySelectorAll('#result .card');
+        
+        for (let i = 0; i < cards.length; i++) {
+          const card = cards[i];
+          const processo = card.querySelector('.card-header').textContent.replace('Processo:', '').trim();
+          const table = card.querySelector('table');
+          const rows = table.querySelectorAll('tbody tr');
+          
+          // Adicionar nome da aba
+          pdf.setFontSize(12);
+          pdf.setFont('helvetica', 'bold');
+          const processoText = `Aba: ${processo}`;
+          
+          // Verificar se precisa de nova página
+          if (yPosition > pageHeight - 50) {
+            pdf.addPage();
+            currentPage++;
+            yPosition = margin;
+          }
+          
+          pdf.text(processoText, margin, yPosition);
+          yPosition += 8;
+
+          // Processar cada linha/contrato
+          pdf.setFont('helvetica', 'normal');
+          pdf.setFontSize(10);
+          
+          for (let j = 0; j < rows.length; j++) {
+            const cells = Array.from(rows[j].querySelectorAll('td'));
+            
+            // Verificar se precisa de nova página antes de adicionar novo contrato
+            if (yPosition > pageHeight - 60) {
+              pdf.addPage();
+              currentPage++;
+              yPosition = margin;
+            }
+            
+            // Nº do Contrato (em negrito)
+            pdf.setFont('helvetica', 'bold');
+            pdf.setFontSize(11);
+            const contratoText = `Nº do Contrato: ${cells[0]?.textContent || ''}`;
+            pdf.text(contratoText, margin, yPosition);
+            yPosition += 6;
+            
+            // Nº da Licitação (em negrito) e datas (normal)
+            pdf.setFont('helvetica', 'bold');
+            pdf.text('Nº da Licitação:', margin, yPosition);
+            pdf.setFont('helvetica', 'normal');
+            const licitacaoX = margin + 28;
+            pdf.text(cells[1]?.textContent || '', licitacaoX, yPosition);
+            
+            // Datas na mesma linha
+            const datasText = `Celebração: ${cells[2]?.textContent || ''} Início: ${cells[3]?.textContent || ''} Fim: ${cells[4]?.textContent || ''}`;
+            const datasX = pageWidth - margin - pdf.getTextWidth(datasText);
+            pdf.text(datasText, datasX, yPosition);
+            yPosition += 6;
+            
+            // Órgão (em negrito)
+            pdf.setFont('helvetica', 'bold');
+            pdf.text('Órgão:', margin, yPosition);
+            pdf.setFont('helvetica', 'normal');
+            const orgaoText = cells[5]?.textContent || '';
+            const orgaoLines = pdf.splitTextToSize(orgaoText, pageWidth - margin * 2);
+            orgaoLines.forEach((line, index) => {
+              pdf.text(line, margin + 12, yPosition + (index * 5));
+            });
+            yPosition += (orgaoLines.length * 5) + 4;
+            
+            // Objeto do Contrato
+            pdf.setFont('helvetica', 'bold');
+            pdf.text('Objeto do Contrato:', margin, yPosition);
+            pdf.setFont('helvetica', 'normal');
+            yPosition += 5;
+            
+            const objetoText = cells[6]?.textContent || '';
+            const objetoLines = pdf.splitTextToSize(objetoText, pageWidth - margin * 2);
+            objetoLines.forEach((line, index) => {
+              if (yPosition > pageHeight - 10) {
+                pdf.addPage();
+                currentPage++;
+                yPosition = margin;
+              }
+              pdf.text(line, margin, yPosition + (index * 5));
+            });
+            yPosition += (objetoLines.length * 5) + 12;
+            
+            // Linha separadora entre contratos
+            if (j < rows.length - 1 && yPosition < pageHeight - 15) {
+              pdf.setDrawColor(200, 200, 200);
+              pdf.line(margin, yPosition - 3, pageWidth - margin, yPosition - 3);
+              yPosition += 5;
+            }
+          }
+          
+          // Espaço entre abas
+          yPosition += 10;
+        }
+        
+        // Adicionar rodapé com número da página em todas as páginas
+        const totalPages = pdf.internal.getNumberOfPages();
+        for (let i = 1; i <= totalPages; i++) {
+          pdf.setPage(i);
+          pdf.setFontSize(8);
+          pdf.setTextColor(128, 128, 128);
+          pdf.text(
+            `Página ${i} de ${totalPages} - Relatório gerado em ${today} por Sérgio Carneiro`,
+            pageWidth / 2,
+            pageHeight - 10,
+            { align: 'center' }
+          );
+        }
+
+        // Salvar PDF
+        const fileName = `contratos_pmtf_${searchTerm ? searchTerm.replace(/[^a-z0-9]/gi, '_') : 'todos'}_${new Date().toISOString().slice(0,10)}.pdf`;
+        pdf.save(fileName);
+        
+      } catch (error) {
+        console.error('Erro ao gerar PDF:', error);
+        alert('Erro ao gerar PDF. Tente novamente.');
+      } finally {
+        document.body.removeChild(loadingDiv);
+      }
     }
 
     // Função principal de busca
@@ -764,24 +926,6 @@
         document.body.style.backgroundColor = '#f8f9fa';
         document.body.style.color = '#212529';
         themeIcon.className = 'bi bi-moon-stars-fill';
-      }
-    }
-
-    // Função para gerar PDF (simplificada para exemplo)
-    async function generatePDF() {
-      const loadingDiv = document.createElement('div');
-      loadingDiv.className = 'pdf-loading';
-      loadingDiv.innerHTML = '<div class="spinner-border spinner-border-sm me-2"></div>Gerando PDF...';
-      document.body.appendChild(loadingDiv);
-
-      try {
-        // Implementação do PDF aqui
-        alert('Funcionalidade de PDF será implementada');
-      } catch (error) {
-        console.error('Erro ao gerar PDF:', error);
-        alert('Erro ao gerar PDF. Tente novamente.');
-      } finally {
-        document.body.removeChild(loadingDiv);
       }
     }
   </script>
