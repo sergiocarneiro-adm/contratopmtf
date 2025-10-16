@@ -126,8 +126,14 @@
       min-width: 150px;
     }
     
+    .col-qtadt {
+      width: 8%;
+      min-width: 80px;
+      text-align: center;
+    }
+    
     .col-objeto {
-      width: 40%;
+      width: 32%;
       min-width: 200px;
     }
 
@@ -274,7 +280,8 @@
       
       .col-celebracao,
       .col-inicio,
-      .col-fim {
+      .col-fim,
+      .col-qtadt {
         width: 9%;
         font-size: 0.7rem;
       }
@@ -519,7 +526,7 @@
       return escapeHtml(text).replace(regex, '<mark>$1</mark>');
     }
 
-    // Função para mapear índices das colunas
+    // Função para mapear índices das colunas - CORRIGIDA
     function mapearColunas(colunas) {
       const mapeamento = {};
       
@@ -538,7 +545,9 @@
           mapeamento.fim = index;
         } else if (colunaNormalizada.includes('orgao') || colunaNormalizada.includes('órgão')) {
           mapeamento.orgao = index;
-        } else if (colunaNormalizada.includes('favorecido') || colunaNormalizada.includes('objeto')) {
+        } else if (colunaNormalizada.includes('qt.adt') || colunaNormalizada.includes('qt adt') || colunaNormalizada.includes('quantidade')) {
+          mapeamento.qtadt = index;
+        } else if (colunaNormalizada.includes('favorecido') || colunaNormalizada.includes('objeto') || colunaNormalizada.includes('contratado')) {
           mapeamento.objeto = index;
         }
       });
@@ -651,13 +660,22 @@
             });
             yPosition += (orgaoLines.length * 5) + 4;
             
+            // QT.Adt. (se existir)
+            if (cells[6]?.textContent) {
+              pdf.setFont('helvetica', 'bold');
+              pdf.text('QT.Adt.:', margin, yPosition);
+              pdf.setFont('helvetica', 'normal');
+              pdf.text(cells[6]?.textContent || '', margin + 15, yPosition);
+              yPosition += 5;
+            }
+            
             // Objeto do Contrato
             pdf.setFont('helvetica', 'bold');
             pdf.text('Objeto do Contrato:', margin, yPosition);
             pdf.setFont('helvetica', 'normal');
             yPosition += 5;
             
-            const objetoText = cells[6]?.textContent || '';
+            const objetoText = cells[7]?.textContent || '';
             const objetoLines = pdf.splitTextToSize(objetoText, pageWidth - margin * 2);
             objetoLines.forEach((line, index) => {
               if (yPosition > pageHeight - 10) {
@@ -707,7 +725,7 @@
       }
     }
 
-    // Função principal de busca
+    // Função principal de busca - CORRIGIDA
     function search() {
       const termo = document.getElementById('searchTerm').value.trim().toLowerCase();
       const resultDiv = document.getElementById('result');
@@ -813,6 +831,10 @@
         if (item.mapeamentoColunas.orgao !== undefined) {
           cardHTML += `<th class="col-orgao">${escapeHtml(item.colunas[item.mapeamentoColunas.orgao])}</th>`;
         }
+        // NOVA COLUNA QT.Adt.
+        if (item.mapeamentoColunas.qtadt !== undefined) {
+          cardHTML += `<th class="col-qtadt">${escapeHtml(item.colunas[item.mapeamentoColunas.qtadt])}</th>`;
+        }
         if (item.mapeamentoColunas.objeto !== undefined) {
           cardHTML += `<th class="col-objeto">${escapeHtml(item.colunas[item.mapeamentoColunas.objeto])}</th>`;
         }
@@ -844,6 +866,10 @@
           }
           if (item.mapeamentoColunas.orgao !== undefined) {
             cardHTML += `<td class="col-orgao">${highlightTerm(res[item.mapeamentoColunas.orgao], termo)}</td>`;
+          }
+          // NOVA COLUNA QT.Adt.
+          if (item.mapeamentoColunas.qtadt !== undefined) {
+            cardHTML += `<td class="col-qtadt">${highlightTerm(res[item.mapeamentoColunas.qtadt], termo)}</td>`;
           }
           if (item.mapeamentoColunas.objeto !== undefined) {
             cardHTML += `<td class="col-objeto">${highlightTerm(res[item.mapeamentoColunas.objeto], termo)}</td>`;
