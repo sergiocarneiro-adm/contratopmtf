@@ -72,18 +72,49 @@
     table {
       width: 100%;
       margin-top: 10px;
+      table-layout: fixed;
     }
 
     th, td {
       padding: 10px;
       border: 1px solid #dee2e6;
       vertical-align: top;
+      word-wrap: break-word;
     }
 
     th {
       background-color: var(--main-color);
       color: white;
       font-weight: 500;
+    }
+
+    /* Larguras otimizadas para as colunas */
+    .col-numero-contrato {
+      width: 12%;
+    }
+    
+    .col-licitacao {
+      width: 10%;
+    }
+    
+    .col-celebracao {
+      width: 8%;
+    }
+    
+    .col-inicio {
+      width: 8%;
+    }
+    
+    .col-fim {
+      width: 8%;
+    }
+    
+    .col-orgao {
+      width: 20%;
+    }
+    
+    .col-objeto {
+      width: 34%;
     }
 
     mark {
@@ -460,6 +491,33 @@
       return escapeHtml(text).replace(regex, '<mark>$1</mark>');
     }
 
+    // Função para mapear índices das colunas
+    function mapearColunas(colunas) {
+      const mapeamento = {};
+      
+      colunas.forEach((coluna, index) => {
+        const colunaNormalizada = coluna.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+        
+        if (colunaNormalizada.includes('numero do contrato') || colunaNormalizada.includes('nº do contrato')) {
+          mapeamento.contrato = index;
+        } else if (colunaNormalizada.includes('licitacao') || colunaNormalizada.includes('licitação')) {
+          mapeamento.licitacao = index;
+        } else if (colunaNormalizada.includes('celebracao') || colunaNormalizada.includes('celebração')) {
+          mapeamento.celebracao = index;
+        } else if (colunaNormalizada.includes('inicio') || colunaNormalizada.includes('início')) {
+          mapeamento.inicio = index;
+        } else if (colunaNormalizada.includes('fim') || colunaNormalizada.includes('termino')) {
+          mapeamento.fim = index;
+        } else if (colunaNormalizada.includes('orgao') || colunaNormalizada.includes('órgão')) {
+          mapeamento.orgao = index;
+        } else if (colunaNormalizada.includes('favorecido') || colunaNormalizada.includes('objeto')) {
+          mapeamento.objeto = index;
+        }
+      });
+      
+      return mapeamento;
+    }
+
     // Função para gerar PDF
     async function generatePDF() {
       // Mostrar loading
@@ -685,21 +743,19 @@
       const resultados = [];
 
       jsonData.forEach((aba) => {
-        // Encontra índice da coluna "número do contrato"
-        const colIndexContrato = aba.colunas.findIndex((col) =>
-          col && col.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().includes('numero do contrato')
-        );
-
-        console.log(`📊 Aba "${aba.aba}": Índice coluna contrato:`, colIndexContrato);
+        // Mapeia as colunas para identificar cada tipo
+        const mapeamentoColunas = mapearColunas(aba.colunas);
+        
+        console.log(`📊 Aba "${aba.aba}": Mapeamento de colunas:`, mapeamentoColunas);
 
         let correspondencias;
 
         if (anoSelecionado && !termo) {
           // Busca apenas por ano - CORRIGIDA
           correspondencias = aba.linhas.filter((linha) => {
-            if (colIndexContrato === -1) return false;
+            if (mapeamentoColunas.contrato === undefined) return false;
             
-            const contrato = linha[colIndexContrato] || '';
+            const contrato = linha[mapeamentoColunas.contrato] || '';
             const anoContrato = extrairAnoDoContrato(contrato);
             
             console.log(`🔍 Comparando: ${anoContrato} === ${anoSelecionado}`, anoContrato === anoSelecionado);
@@ -709,7 +765,7 @@
         } else {
           // Busca por termo e/ou ano - CORRIGIDA
           correspondencias = aba.linhas.filter((linha) => {
-            const contrato = colIndexContrato !== -1 ? (linha[colIndexContrato] || '') : '';
+            const contrato = mapeamentoColunas.contrato !== undefined ? (linha[mapeamentoColunas.contrato] || '') : '';
             const anoContrato = extrairAnoDoContrato(contrato);
             
             const contemAno = !anoSelecionado || anoContrato === anoSelecionado;
@@ -728,7 +784,7 @@
             aba: aba.aba, 
             colunas: aba.colunas, 
             resultados: correspondencias,
-            colIndexContrato: colIndexContrato
+            mapeamentoColunas: mapeamentoColunas
           });
         }
       });
@@ -748,15 +804,6 @@
 
       // Gera os resultados
       resultados.forEach((item) => {
-        let colunasExibir;
-        if (anoSelecionado && !termo && item.colIndexContrato !== -1) {
-          // Mostra apenas a coluna do contrato quando filtrando só por ano
-          colunasExibir = [item.colunas[item.colIndexContrato]];
-        } else {
-          // Mostra todas as colunas
-          colunasExibir = item.colunas;
-        }
-
         let cardHTML = `
           <div class="card">
             <div class="card-header">
@@ -767,21 +814,65 @@
               <div class="table-responsive">
                 <table class="table table-bordered table-hover">
                   <thead>
-                    <tr>${colunasExibir.map((col) => `<th>${escapeHtml(col)}</th>`).join('')}</tr>
+                    <tr>
+        `;
+        
+        // Cabeçalhos da tabela com classes de largura
+        if (item.mapeamentoColunas.contrato !== undefined) {
+          cardHTML += `<th class="col-numero-contrato">${escapeHtml(item.colunas[item.mapeamentoColunas.contrato])}</th>`;
+        }
+        if (item.mapeamentoColunas.licitacao !== undefined) {
+          cardHTML += `<th class="col-licitacao">${escapeHtml(item.colunas[item.mapeamentoColunas.licitacao])}</th>`;
+        }
+        if (item.mapeamentoColunas.celebracao !== undefined) {
+          cardHTML += `<th class="col-celebracao">${escapeHtml(item.colunas[item.mapeamentoColunas.celebracao])}</th>`;
+        }
+        if (item.mapeamentoColunas.inicio !== undefined) {
+          cardHTML += `<th class="col-inicio">${escapeHtml(item.colunas[item.mapeamentoColunas.inicio])}</th>`;
+        }
+        if (item.mapeamentoColunas.fim !== undefined) {
+          cardHTML += `<th class="col-fim">${escapeHtml(item.colunas[item.mapeamentoColunas.fim])}</th>`;
+        }
+        if (item.mapeamentoColunas.orgao !== undefined) {
+          cardHTML += `<th class="col-orgao">${escapeHtml(item.colunas[item.mapeamentoColunas.orgao])}</th>`;
+        }
+        if (item.mapeamentoColunas.objeto !== undefined) {
+          cardHTML += `<th class="col-objeto">${escapeHtml(item.colunas[item.mapeamentoColunas.objeto])}</th>`;
+        }
+        
+        cardHTML += `
+                    </tr>
                   </thead>
                   <tbody>
         `;
 
+        // Linhas da tabela
         item.resultados.forEach((res) => {
-          if (anoSelecionado && !termo && item.colIndexContrato !== -1) {
-            // Apenas coluna do contrato
-            cardHTML += `<tr><td>${highlightTerm(res[item.colIndexContrato], '')}</td></tr>`;
-          } else {
-            // Todas as colunas
-            cardHTML += '<tr>' + res.map((dado, index) => 
-              `<td>${highlightTerm(dado, termo)}</td>`
-            ).join('') + '</tr>';
+          cardHTML += '<tr>';
+          
+          if (item.mapeamentoColunas.contrato !== undefined) {
+            cardHTML += `<td class="col-numero-contrato">${highlightTerm(res[item.mapeamentoColunas.contrato], termo)}</td>`;
           }
+          if (item.mapeamentoColunas.licitacao !== undefined) {
+            cardHTML += `<td class="col-licitacao">${highlightTerm(res[item.mapeamentoColunas.licitacao], termo)}</td>`;
+          }
+          if (item.mapeamentoColunas.celebracao !== undefined) {
+            cardHTML += `<td class="col-celebracao">${highlightTerm(res[item.mapeamentoColunas.celebracao], termo)}</td>`;
+          }
+          if (item.mapeamentoColunas.inicio !== undefined) {
+            cardHTML += `<td class="col-inicio">${highlightTerm(res[item.mapeamentoColunas.inicio], termo)}</td>`;
+          }
+          if (item.mapeamentoColunas.fim !== undefined) {
+            cardHTML += `<td class="col-fim">${highlightTerm(res[item.mapeamentoColunas.fim], termo)}</td>`;
+          }
+          if (item.mapeamentoColunas.orgao !== undefined) {
+            cardHTML += `<td class="col-orgao">${highlightTerm(res[item.mapeamentoColunas.orgao], termo)}</td>`;
+          }
+          if (item.mapeamentoColunas.objeto !== undefined) {
+            cardHTML += `<td class="col-objeto">${highlightTerm(res[item.mapeamentoColunas.objeto], termo)}</td>`;
+          }
+          
+          cardHTML += '</tr>';
         });
 
         cardHTML += `
