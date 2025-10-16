@@ -122,8 +122,8 @@
     }
     
     .col-orgao {
-      width: 18%;
-      min-width: 150px;
+      width: 15%;
+      min-width: 120px;
     }
     
     .col-qtadt {
@@ -132,9 +132,14 @@
       text-align: center;
     }
     
+    .col-favorecido {
+      width: 15%;
+      min-width: 120px;
+    }
+    
     .col-objeto {
-      width: 32%;
-      min-width: 200px;
+      width: 20%;
+      min-width: 150px;
     }
 
     .col-celebracao,
@@ -284,6 +289,12 @@
       .col-qtadt {
         width: 9%;
         font-size: 0.7rem;
+      }
+      
+      .col-orgao,
+      .col-favorecido,
+      .col-objeto {
+        width: 18%;
       }
       
       th, td {
@@ -547,7 +558,9 @@
           mapeamento.orgao = index;
         } else if (colunaNormalizada.includes('qt.adt') || colunaNormalizada.includes('qt adt') || colunaNormalizada.includes('quantidade')) {
           mapeamento.qtadt = index;
-        } else if (colunaNormalizada.includes('favorecido') || colunaNormalizada.includes('objeto') || colunaNormalizada.includes('contratado')) {
+        } else if (colunaNormalizada.includes('favorecido') || colunaNormalizada.includes('contratado')) {
+          mapeamento.favorecido = index;
+        } else if (colunaNormalizada.includes('objeto')) {
           mapeamento.objeto = index;
         }
       });
@@ -555,7 +568,7 @@
       return mapeamento;
     }
 
-    // FUNÇÃO PARA GERAR PDF NO FORMATO DO PRINT (SEM "Aba: Página1")
+    // FUNÇÃO PARA GERAR PDF NO FORMATO DO PRINT (CORRIGIDA)
     async function generatePDF() {
       const loadingDiv = document.createElement('div');
       loadingDiv.className = 'pdf-loading';
@@ -608,6 +621,10 @@
           const table = card.querySelector('table');
           const rows = table.querySelectorAll('tbody tr');
           
+          // Obter os cabeçalhos para mapear as colunas
+          const headers = Array.from(table.querySelectorAll('thead th')).map(th => th.textContent.trim());
+          const mapeamentoColunas = mapearColunas(headers);
+          
           // VERIFICAÇÃO DE NOVA PÁGINA (SEM ADICIONAR O TÍTULO "Aba: Página1")
           if (yPosition > pageHeight - 50) {
             pdf.addPage();
@@ -630,62 +647,102 @@
             }
             
             // Nº do Contrato (em negrito)
-            pdf.setFont('helvetica', 'bold');
-            pdf.setFontSize(11);
-            const contratoText = `Nº do Contrato: ${cells[0]?.textContent || ''}`;
-            pdf.text(contratoText, margin, yPosition);
-            yPosition += 6;
+            if (mapeamentoColunas.contrato !== undefined) {
+              pdf.setFont('helvetica', 'bold');
+              pdf.setFontSize(11);
+              const contratoText = `Nº do Contrato: ${cells[mapeamentoColunas.contrato]?.textContent || ''}`;
+              pdf.text(contratoText, margin, yPosition);
+              yPosition += 6;
+            }
             
             // Nº da Licitação (em negrito) e datas (normal)
-            pdf.setFont('helvetica', 'bold');
-            pdf.text('Nº da Licitação:', margin, yPosition);
-            pdf.setFont('helvetica', 'normal');
-            const licitacaoX = margin + 28;
-            pdf.text(cells[1]?.textContent || '', licitacaoX, yPosition);
+            if (mapeamentoColunas.licitacao !== undefined) {
+              pdf.setFont('helvetica', 'bold');
+              pdf.text('Nº da Licitação:', margin, yPosition);
+              pdf.setFont('helvetica', 'normal');
+              const licitacaoX = margin + 28;
+              pdf.text(cells[mapeamentoColunas.licitacao]?.textContent || '', licitacaoX, yPosition);
+            }
             
             // Datas na mesma linha
-            const datasText = `Celebração: ${cells[2]?.textContent || ''} Início: ${cells[3]?.textContent || ''} Fim: ${cells[4]?.textContent || ''}`;
-            const datasX = pageWidth - margin - pdf.getTextWidth(datasText);
-            pdf.text(datasText, datasX, yPosition);
+            let datasText = '';
+            if (mapeamentoColunas.celebracao !== undefined) {
+              datasText += `Celebração: ${cells[mapeamentoColunas.celebracao]?.textContent || ''} `;
+            }
+            if (mapeamentoColunas.inicio !== undefined) {
+              datasText += `Início: ${cells[mapeamentoColunas.inicio]?.textContent || ''} `;
+            }
+            if (mapeamentoColunas.fim !== undefined) {
+              datasText += `Fim: ${cells[mapeamentoColunas.fim]?.textContent || ''}`;
+            }
+            
+            if (datasText) {
+              const datasX = pageWidth - margin - pdf.getTextWidth(datasText);
+              pdf.text(datasText, datasX, yPosition);
+            }
             yPosition += 6;
             
             // Órgão (em negrito)
-            pdf.setFont('helvetica', 'bold');
-            pdf.text('Órgão:', margin, yPosition);
-            pdf.setFont('helvetica', 'normal');
-            const orgaoText = cells[5]?.textContent || '';
-            const orgaoLines = pdf.splitTextToSize(orgaoText, pageWidth - margin * 2);
-            orgaoLines.forEach((line, index) => {
-              pdf.text(line, margin + 12, yPosition + (index * 5));
-            });
-            yPosition += (orgaoLines.length * 5) + 4;
+            if (mapeamentoColunas.orgao !== undefined) {
+              pdf.setFont('helvetica', 'bold');
+              pdf.text('Órgão:', margin, yPosition);
+              pdf.setFont('helvetica', 'normal');
+              const orgaoText = cells[mapeamentoColunas.orgao]?.textContent || '';
+              const orgaoLines = pdf.splitTextToSize(orgaoText, pageWidth - margin * 2);
+              orgaoLines.forEach((line, index) => {
+                pdf.text(line, margin + 12, yPosition + (index * 5));
+              });
+              yPosition += (orgaoLines.length * 5) + 4;
+            }
             
             // QT.Adt. (se existir)
-            if (cells[6]?.textContent) {
+            if (mapeamentoColunas.qtadt !== undefined && cells[mapeamentoColunas.qtadt]?.textContent) {
               pdf.setFont('helvetica', 'bold');
               pdf.text('QT.Adt.:', margin, yPosition);
               pdf.setFont('helvetica', 'normal');
-              pdf.text(cells[6]?.textContent || '', margin + 15, yPosition);
+              pdf.text(cells[mapeamentoColunas.qtadt]?.textContent || '', margin + 15, yPosition);
               yPosition += 5;
             }
             
-            // Objeto do Contrato
-            pdf.setFont('helvetica', 'bold');
-            pdf.text('Objeto do Contrato:', margin, yPosition);
-            pdf.setFont('helvetica', 'normal');
-            yPosition += 5;
+            // Favorecido / Contratado (se existir)
+            if (mapeamentoColunas.favorecido !== undefined) {
+              pdf.setFont('helvetica', 'bold');
+              pdf.text('Favorecido / Contratado:', margin, yPosition);
+              pdf.setFont('helvetica', 'normal');
+              yPosition += 5;
+              
+              const favorecidoText = cells[mapeamentoColunas.favorecido]?.textContent || '';
+              const favorecidoLines = pdf.splitTextToSize(favorecidoText, pageWidth - margin * 2);
+              favorecidoLines.forEach((line, index) => {
+                if (yPosition > pageHeight - 10) {
+                  pdf.addPage();
+                  currentPage++;
+                  yPosition = margin;
+                }
+                pdf.text(line, margin, yPosition + (index * 5));
+              });
+              yPosition += (favorecidoLines.length * 5) + 4;
+            }
             
-            const objetoText = cells[7]?.textContent || '';
-            const objetoLines = pdf.splitTextToSize(objetoText, pageWidth - margin * 2);
-            objetoLines.forEach((line, index) => {
-              if (yPosition > pageHeight - 10) {
-                pdf.addPage();
-                currentPage++;
-                yPosition = margin;
-              }
-              pdf.text(line, margin, yPosition + (index * 5));
-            });
-            yPosition += (objetoLines.length * 5) + 12;
+            // Objeto do Contrato (se existir)
+            if (mapeamentoColunas.objeto !== undefined) {
+              pdf.setFont('helvetica', 'bold');
+              pdf.text('Objeto do Contrato:', margin, yPosition);
+              pdf.setFont('helvetica', 'normal');
+              yPosition += 5;
+              
+              const objetoText = cells[mapeamentoColunas.objeto]?.textContent || '';
+              const objetoLines = pdf.splitTextToSize(objetoText, pageWidth - margin * 2);
+              objetoLines.forEach((line, index) => {
+                if (yPosition > pageHeight - 10) {
+                  pdf.addPage();
+                  currentPage++;
+                  yPosition = margin;
+                }
+                pdf.text(line, margin, yPosition + (index * 5));
+              });
+              yPosition += (objetoLines.length * 5) + 12;
+            }
             
             // Linha separadora entre contratos
             if (j < rows.length - 1 && yPosition < pageHeight - 15) {
@@ -835,6 +892,11 @@
         if (item.mapeamentoColunas.qtadt !== undefined) {
           cardHTML += `<th class="col-qtadt">${escapeHtml(item.colunas[item.mapeamentoColunas.qtadt])}</th>`;
         }
+        // NOVA COLUNA Favorecido / Contratado
+        if (item.mapeamentoColunas.favorecido !== undefined) {
+          cardHTML += `<th class="col-favorecido">${escapeHtml(item.colunas[item.mapeamentoColunas.favorecido])}</th>`;
+        }
+        // COLUNA Objeto do Contrato
         if (item.mapeamentoColunas.objeto !== undefined) {
           cardHTML += `<th class="col-objeto">${escapeHtml(item.colunas[item.mapeamentoColunas.objeto])}</th>`;
         }
@@ -871,6 +933,11 @@
           if (item.mapeamentoColunas.qtadt !== undefined) {
             cardHTML += `<td class="col-qtadt">${highlightTerm(res[item.mapeamentoColunas.qtadt], termo)}</td>`;
           }
+          // NOVA COLUNA Favorecido / Contratado
+          if (item.mapeamentoColunas.favorecido !== undefined) {
+            cardHTML += `<td class="col-favorecido">${highlightTerm(res[item.mapeamentoColunas.favorecido], termo)}</td>`;
+          }
+          // COLUNA Objeto do Contrato
           if (item.mapeamentoColunas.objeto !== undefined) {
             cardHTML += `<td class="col-objeto">${highlightTerm(res[item.mapeamentoColunas.objeto], termo)}</td>`;
           }
