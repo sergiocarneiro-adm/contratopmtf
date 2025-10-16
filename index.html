@@ -88,7 +88,7 @@
       font-weight: 500;
     }
 
-    /* Larguras otimizadas para as colunas */
+    /* LARGURAS OTIMIZADAS DAS COLUNAS */
     .col-numero-contrato {
       width: 12%;
     }
@@ -98,23 +98,23 @@
     }
     
     .col-celebracao {
-      width: 8%;
+      width: 7%;
     }
     
     .col-inicio {
-      width: 8%;
+      width: 6%;
     }
     
     .col-fim {
-      width: 8%;
+      width: 6%;
     }
     
     .col-orgao {
-      width: 20%;
+      width: 18%;
     }
     
     .col-objeto {
-      width: 34%;
+      width: 41%; /* Aumentada para usar o espaço disponível */
     }
 
     mark {
@@ -244,6 +244,14 @@
       display: flex;
       align-items: center;
       gap: 10px;
+    }
+
+    /* Ajustes para colunas de data */
+    .col-celebracao,
+    .col-inicio,
+    .col-fim {
+      font-size: 0.85rem;
+      text-align: center;
     }
   </style>
 </head>
