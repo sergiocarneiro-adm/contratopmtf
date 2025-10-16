@@ -546,7 +546,7 @@
       return mapeamento;
     }
 
-    // NOVA FUNÇÃO PARA GERAR PDF NO FORMATO DO PRINT
+    // FUNÇÃO PARA GERAR PDF NO FORMATO DO PRINT (SEM "Aba: Página1")
     async function generatePDF() {
       const loadingDiv = document.createElement('div');
       loadingDiv.className = 'pdf-loading';
@@ -596,24 +596,15 @@
         
         for (let i = 0; i < cards.length; i++) {
           const card = cards[i];
-          const processo = card.querySelector('.card-header').textContent.replace('Processo:', '').trim();
           const table = card.querySelector('table');
           const rows = table.querySelectorAll('tbody tr');
           
-          // Adicionar nome da aba
-          pdf.setFontSize(12);
-          pdf.setFont('helvetica', 'bold');
-          const processoText = `Aba: ${processo}`;
-          
-          // Verificar se precisa de nova página
+          // VERIFICAÇÃO DE NOVA PÁGINA (SEM ADICIONAR O TÍTULO "Aba: Página1")
           if (yPosition > pageHeight - 50) {
             pdf.addPage();
             currentPage++;
             yPosition = margin;
           }
-          
-          pdf.text(processoText, margin, yPosition);
-          yPosition += 8;
 
           // Processar cada linha/contrato
           pdf.setFont('helvetica', 'normal');
