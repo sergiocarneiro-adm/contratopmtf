@@ -9,7 +9,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet" />
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" />
-  <!-- Biblioteca para PDF -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
   <style>
@@ -95,52 +94,15 @@
       font-size: 0.82rem;
     }
 
-    /* LARGURAS OTIMIZADAS - SEM ESPAÇOS DESNECESSÁRIOS */
-    .col-numero-contrato {
-      width: 10%;
-      min-width: 100px;
-    }
-    
-    .col-licitacao {
-      width: 10%;
-      min-width: 100px;
-    }
-    
-    .col-celebracao {
-      width: 8%;
-      min-width: 80px;
-    }
-    
-    .col-inicio {
-      width: 7%;
-      min-width: 70px;
-    }
-    
-    .col-fim {
-      width: 7%;
-      min-width: 70px;
-    }
-    
-    .col-orgao {
-      width: 15%;
-      min-width: 120px;
-    }
-    
-    .col-qtadt {
-      width: 8%;
-      min-width: 80px;
-      text-align: center;
-    }
-    
-    .col-favorecido {
-      width: 15%;
-      min-width: 120px;
-    }
-    
-    .col-objeto {
-      width: 20%;
-      min-width: 150px;
-    }
+    .col-numero-contrato { width: 10%; min-width: 100px; }
+    .col-licitacao { width: 10%; min-width: 100px; }
+    .col-celebracao { width: 8%; min-width: 80px; }
+    .col-inicio { width: 7%; min-width: 70px; }
+    .col-fim { width: 7%; min-width: 70px; }
+    .col-orgao { width: 15%; min-width: 120px; }
+    .col-qtadt { width: 8%; min-width: 80px; text-align: center; }
+    .col-favorecido { width: 15%; min-width: 120px; }
+    .col-objeto { width: 20%; min-width: 150px; }
 
     .col-celebracao,
     .col-inicio,
@@ -219,12 +181,12 @@
       margin: 2rem 0;
       text-align: center;
     }
-    
+
     #result {
       margin-bottom: 5rem;
       width: 100%;
     }
-    
+
     .card-header {
       background-color: var(--main-color);
       color: white;
@@ -235,16 +197,16 @@
       border-top-left-radius: 12px;
       border-top-right-radius: 12px;
     }
-    
+
     tbody tr {
       background-color: #fff;
       transition: background-color 0.2s ease;
     }
-    
+
     tbody tr:hover {
       background-color: #f0e0ff;
     }
-    
+
     .alert {
       border-radius: 8px;
     }
@@ -277,30 +239,33 @@
       gap: 10px;
     }
 
+    /* Skeleton loader para os botões de ano */
+    .year-btn-skeleton {
+      display: inline-block;
+      width: 60px;
+      height: 38px;
+      background: linear-gradient(90deg, #e0d0e8 25%, #f0e8f5 50%, #e0d0e8 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.2s infinite;
+      border-radius: 6px;
+    }
+
+    @keyframes shimmer {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
     @media (max-width: 768px) {
       .col-numero-contrato,
-      .col-licitacao {
-        width: 12%;
-      }
-      
+      .col-licitacao { width: 12%; }
       .col-celebracao,
       .col-inicio,
       .col-fim,
-      .col-qtadt {
-        width: 9%;
-        font-size: 0.7rem;
-      }
-      
+      .col-qtadt { width: 9%; font-size: 0.7rem; }
       .col-orgao,
       .col-favorecido,
-      .col-objeto {
-        width: 18%;
-      }
-      
-      th, td {
-        padding: 6px 4px;
-        font-size: 0.75rem;
-      }
+      .col-objeto { width: 18%; }
+      th, td { padding: 6px 4px; font-size: 0.75rem; }
     }
   </style>
 </head>
@@ -321,7 +286,7 @@
     </div>
 
     <div class="search-box">
-      <input 
+      <input
         id="searchTerm"
         type="search"
         class="form-control"
@@ -329,13 +294,15 @@
         aria-label="Buscar"
         autocomplete="off"
       />
+
+      <!-- Botões de ano: gerados dinamicamente após carregar o JSON -->
       <div class="btn-group" role="group" aria-label="Filtro por ano" id="yearButtons">
-        <button type="button" class="btn btn-outline-fuchsia year-btn" data-year="2025">2025</button>
-        <button type="button" class="btn btn-outline-fuchsia year-btn" data-year="2024">2024</button>
-        <button type="button" class="btn btn-outline-fuchsia year-btn" data-year="2023">2023</button>
-        <button type="button" class="btn btn-outline-fuchsia year-btn" data-year="2022">2022</button>
-        <button type="button" class="btn btn-outline-fuchsia year-btn" data-year="2021">2021</button>
+        <!-- Skeletons temporários enquanto carrega -->
+        <span class="year-btn-skeleton"></span>
+        <span class="year-btn-skeleton" style="margin-left:4px;"></span>
+        <span class="year-btn-skeleton" style="margin-left:4px;"></span>
       </div>
+
       <button onclick="search()" class="btn btn-fuchsia">
         <i class="bi bi-search"></i> Buscar
       </button>
@@ -366,106 +333,129 @@
   </div>
 
   <script>
-    // Variáveis globais
     const jsonUrl = 'https://sergiocarneiro-adm.github.io/contratopmtf/dados_contratos.json';
     let jsonData = [];
     let anoSelecionado = '';
 
-    // Referência ao botão de exportar PDF
     const exportPdfBtn = document.getElementById('exportPdf');
 
-    // Função para mostrar/ocultar botão de exportar
     function toggleExportButton(show) {
       exportPdfBtn.style.display = show ? 'block' : 'none';
     }
 
-    // Função para carregar o JSON
+    // ─────────────────────────────────────────────
+    // NOVO: gera os botões de ano dinamicamente
+    // ─────────────────────────────────────────────
+    function gerarBotoesDeAno() {
+      const anosSet = new Set();
+
+      jsonData.forEach((aba) => {
+        const mapeamento = mapearColunas(aba.colunas);
+        if (mapeamento.contrato === undefined) return;
+
+        aba.linhas.forEach((linha) => {
+          const contrato = linha[mapeamento.contrato] || '';
+          const ano = extrairAnoDoContrato(contrato);
+          if (ano) anosSet.add(ano);
+        });
+      });
+
+      // Ordena do mais recente para o mais antigo
+      const anos = Array.from(anosSet).sort((a, b) => b - a);
+
+      const container = document.getElementById('yearButtons');
+      container.innerHTML = '';   // limpa skeletons / botões anteriores
+
+      if (anos.length === 0) {
+        container.innerHTML = '<span class="text-muted small">Nenhum ano encontrado</span>';
+        return;
+      }
+
+      anos.forEach((ano) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'btn btn-outline-fuchsia year-btn';
+        btn.setAttribute('data-year', ano);
+        btn.textContent = ano;
+        btn.addEventListener('click', function () {
+          toggleYear(this.getAttribute('data-year'));
+        });
+        container.appendChild(btn);
+      });
+    }
+
     async function carregarJSON() {
       console.log('🔄 Iniciando carregamento do JSON...');
-      
+
       document.getElementById('spinner').style.display = 'block';
       document.getElementById('statusInfo').innerHTML = '<i class="bi bi-arrow-repeat"></i> Carregando dados...';
       document.getElementById('result').innerHTML = '';
       toggleExportButton(false);
-      
+
+      // Repõe skeletons enquanto recarrega
+      document.getElementById('yearButtons').innerHTML = `
+        <span class="year-btn-skeleton"></span>
+        <span class="year-btn-skeleton" style="margin-left:4px;"></span>
+        <span class="year-btn-skeleton" style="margin-left:4px;"></span>
+      `;
+
       try {
         const urlComCache = `${jsonUrl}?v=${new Date().getTime()}`;
-        console.log('📡 Fazendo requisição para:', urlComCache);
-        
         const response = await fetch(urlComCache, {
           method: 'GET',
-          headers: {
-            'Accept': 'application/json',
-            'Cache-Control': 'no-cache'
-          }
+          headers: { 'Accept': 'application/json', 'Cache-Control': 'no-cache' }
         });
-        
-        console.log('📨 Resposta recebida:', response.status, response.statusText);
-        
-        if (!response.ok) {
-          throw new Error(`Erro HTTP: ${response.status} - ${response.statusText}`);
-        }
-        
+
+        if (!response.ok) throw new Error(`Erro HTTP: ${response.status} - ${response.statusText}`);
+
         const contentType = response.headers.get('content-type');
-        console.log('📄 Content-Type:', contentType);
-        
-        if (!contentType || !contentType.includes('application/json')) {
+        if (!contentType || !contentType.includes('application/json'))
           throw new Error('Resposta não é JSON válido. Content-Type: ' + contentType);
-        }
-        
+
         const data = await response.json();
-        console.log('📊 Dados brutos recebidos:', data);
-        
-        if (!Array.isArray(data)) {
-          throw new Error('Estrutura inválida: JSON deve ser um array');
-        }
-        
-        if (data.length === 0) {
-          throw new Error('JSON carregado mas está vazio');
-        }
-        
+        if (!Array.isArray(data)) throw new Error('Estrutura inválida: JSON deve ser um array');
+        if (data.length === 0) throw new Error('JSON carregado mas está vazio');
+
         data.forEach((aba, index) => {
-          if (!aba.aba || !Array.isArray(aba.colunas) || !Array.isArray(aba.linhas)) {
-            throw new Error(`Estrutura inválida na aba ${index}: deve ter propriedades 'aba', 'colunas' e 'linhas'`);
-          }
+          if (!aba.aba || !Array.isArray(aba.colunas) || !Array.isArray(aba.linhas))
+            throw new Error(`Estrutura inválida na aba ${index}`);
         });
-        
+
         jsonData = data;
-        
-        console.log('✅ JSON carregado com sucesso!', {
-          totalAbas: jsonData.length,
-          abas: jsonData.map(aba => aba.aba),
-          totalLinhas: jsonData.reduce((total, aba) => total + aba.linhas.length, 0)
-        });
-        
-        document.getElementById('statusInfo').innerHTML = 
-          `<i class="bi bi-check-circle-fill text-success"></i> 
-           Dados carregados com sucesso! ${jsonData.length} abas e 
-           ${jsonData.reduce((total, aba) => total + aba.linhas.length, 0)} registros disponíveis.`;
-        
-        document.getElementById('result').innerHTML = 
+
+        // Gera os botões de ano com base nos dados reais
+        gerarBotoesDeAno();
+
+        const totalLinhas = jsonData.reduce((t, aba) => t + aba.linhas.length, 0);
+
+        document.getElementById('statusInfo').innerHTML =
+          `<i class="bi bi-check-circle-fill text-success"></i>
+           Dados carregados! ${jsonData.length} abas e ${totalLinhas} registros disponíveis.`;
+
+        document.getElementById('result').innerHTML =
           `<div class="alert alert-success" role="alert">
             <h5><i class="bi bi-check-circle"></i> Dados carregados com sucesso!</h5>
-            <strong>${jsonData.length} abas</strong> carregadas com 
-            <strong>${jsonData.reduce((total, aba) => total + aba.linhas.length, 0)} registros</strong> no total.<br>
-            <small>Abas disponíveis: ${jsonData.map(aba => aba.aba).join(', ')}</small>
+            <strong>${jsonData.length} abas</strong> com
+            <strong>${totalLinhas} registros</strong> no total.<br>
+            <small>Abas: ${jsonData.map(a => a.aba).join(', ')}</small>
           </div>`;
-          
+
       } catch (error) {
         console.error('❌ Erro ao carregar JSON:', error);
-        
-        document.getElementById('statusInfo').innerHTML = 
-          `<i class="bi bi-exclamation-triangle-fill text-danger"></i> 
-           Erro ao carregar dados: ${error.message}`;
-           
+
+        document.getElementById('yearButtons').innerHTML =
+          '<span class="text-danger small">Erro ao carregar anos</span>';
+
+        document.getElementById('statusInfo').innerHTML =
+          `<i class="bi bi-exclamation-triangle-fill text-danger"></i> Erro: ${error.message}`;
+
         document.getElementById('result').innerHTML =
           `<div class="alert alert-danger" role="alert">
             <h5><i class="bi bi-exclamation-triangle"></i> Erro ao carregar dados</h5>
             <strong>${error.message}</strong><br><br>
             <details>
               <summary>Detalhes técnicos</summary>
-              <small>Tentando carregar de: ${jsonUrl}<br>
-              Horário do erro: ${new Date().toLocaleString()}</small>
+              <small>URL: ${jsonUrl}<br>Horário: ${new Date().toLocaleString()}</small>
             </details>
           </div>`;
       } finally {
@@ -473,102 +463,61 @@
       }
     }
 
-    // Função para alternar ano
     function toggleYear(ano) {
-      console.log('🎯 Alternando ano:', ano, 'Ano atual selecionado:', anoSelecionado);
-      
-      if (anoSelecionado === ano) {
-        anoSelecionado = '';
-      } else {
-        anoSelecionado = ano;
-      }
-      
-      const botoes = document.querySelectorAll('.year-btn');
-      botoes.forEach((btn) => {
-        const btnYear = btn.getAttribute('data-year');
-        if (btnYear === anoSelecionado) {
-          btn.classList.remove('btn-outline-fuchsia');
-          btn.classList.add('btn-fuchsia', 'active');
-        } else {
-          btn.classList.remove('btn-fuchsia', 'active');
-          btn.classList.add('btn-outline-fuchsia');
-        }
+      anoSelecionado = (anoSelecionado === ano) ? '' : ano;
+
+      document.querySelectorAll('.year-btn').forEach((btn) => {
+        const isActive = btn.getAttribute('data-year') === anoSelecionado;
+        btn.classList.toggle('btn-fuchsia', isActive);
+        btn.classList.toggle('active', isActive);
+        btn.classList.toggle('btn-outline-fuchsia', !isActive);
       });
-      
-      if (anoSelecionado) {
-        document.getElementById('statusInfo').innerHTML = 
-          `<i class="bi bi-funnel-fill"></i> Filtro ativo: Ano ${anoSelecionado}`;
-      } else {
-        document.getElementById('statusInfo').innerHTML = 
-          `<i class="bi bi-check-circle-fill text-success"></i> 
-           Dados carregados! ${jsonData.length} abas disponíveis.`;
-      }
-      
+
+      document.getElementById('statusInfo').innerHTML = anoSelecionado
+        ? `<i class="bi bi-funnel-fill"></i> Filtro ativo: Ano ${anoSelecionado}`
+        : `<i class="bi bi-check-circle-fill text-success"></i> Dados carregados! ${jsonData.length} abas disponíveis.`;
+
       search();
     }
 
-    // Função para extrair ano do contrato
     function extrairAnoDoContrato(contrato) {
       if (!contrato) return '';
-      
-      const str = contrato.toString();
-      const padraoAno = /(20\d{2})/;
-      const match = str.match(padraoAno);
-      
-      if (match) {
-        return match[1];
-      }
-      
-      return '';
+      const match = contrato.toString().match(/(20\d{2})/);
+      return match ? match[1] : '';
     }
 
-    // Função para escapar HTML
     function escapeHtml(text) {
       if (text === null || text === undefined) return '';
-      return String(text).replace(/[&<>"']/g, (m) => 
+      return String(text).replace(/[&<>"']/g, (m) =>
         ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
     }
 
-    // Função para destacar termos
     function highlightTerm(text, termo) {
       if (!termo || !text) return escapeHtml(text);
       const termos = termo.split(/\s+/).filter(Boolean);
-      const regex = new RegExp(`(${termos.map((t) => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})`, 'gi');
+      const regex = new RegExp(
+        `(${termos.map(t => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})`, 'gi'
+      );
       return escapeHtml(text).replace(regex, '<mark>$1</mark>');
     }
 
-    // Função para mapear índices das colunas - CORRIGIDA
     function mapearColunas(colunas) {
       const mapeamento = {};
-      
       colunas.forEach((coluna, index) => {
-        const colunaNormalizada = coluna.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
-        
-        if (colunaNormalizada.includes('numero do contrato') || colunaNormalizada.includes('nº do contrato')) {
-          mapeamento.contrato = index;
-        } else if (colunaNormalizada.includes('licitacao') || colunaNormalizada.includes('licitação') || colunaNormalizada.includes('falsitas')) {
-          mapeamento.licitacao = index;
-        } else if (colunaNormalizada.includes('celebracao') || colunaNormalizada.includes('celebração')) {
-          mapeamento.celebracao = index;
-        } else if (colunaNormalizada.includes('inicio') || colunaNormalizada.includes('início')) {
-          mapeamento.inicio = index;
-        } else if (colunaNormalizada.includes('fim') || colunaNormalizada.includes('termino')) {
-          mapeamento.fim = index;
-        } else if (colunaNormalizada.includes('orgao') || colunaNormalizada.includes('órgão')) {
-          mapeamento.orgao = index;
-        } else if (colunaNormalizada.includes('qt.adt') || colunaNormalizada.includes('qt adt') || colunaNormalizada.includes('quantidade')) {
-          mapeamento.qtadt = index;
-        } else if (colunaNormalizada.includes('favorecido') || colunaNormalizada.includes('contratado')) {
-          mapeamento.favorecido = index;
-        } else if (colunaNormalizada.includes('objeto')) {
-          mapeamento.objeto = index;
-        }
+        const c = coluna.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+        if (c.includes('numero do contrato') || c.includes('nº do contrato')) mapeamento.contrato = index;
+        else if (c.includes('licitacao') || c.includes('licitação') || c.includes('falsitas')) mapeamento.licitacao = index;
+        else if (c.includes('celebracao') || c.includes('celebração')) mapeamento.celebracao = index;
+        else if (c.includes('inicio') || c.includes('início')) mapeamento.inicio = index;
+        else if (c.includes('fim') || c.includes('termino')) mapeamento.fim = index;
+        else if (c.includes('orgao') || c.includes('órgão')) mapeamento.orgao = index;
+        else if (c.includes('qt.adt') || c.includes('qt adt') || c.includes('quantidade')) mapeamento.qtadt = index;
+        else if (c.includes('favorecido') || c.includes('contratado')) mapeamento.favorecido = index;
+        else if (c.includes('objeto')) mapeamento.objeto = index;
       });
-      
       return mapeamento;
     }
 
-    // FUNÇÃO PARA GERAR PDF NO FORMATO DO PRINT (CORRIGIDA)
     async function generatePDF() {
       const loadingDiv = document.createElement('div');
       loadingDiv.className = 'pdf-loading';
@@ -581,182 +530,109 @@
         const pageWidth = pdf.internal.pageSize.getWidth();
         const pageHeight = pdf.internal.pageSize.getHeight();
         const margin = 15;
-        
         let yPosition = margin;
         let currentPage = 1;
 
-        // Informações da busca
         const searchTerm = document.getElementById('searchTerm').value.trim();
         const today = new Date().toLocaleDateString('pt-BR');
-        
-        // Cabeçalho do relatório
+
         pdf.setFontSize(16);
         pdf.setFont('helvetica', 'bold');
         pdf.text('RELATÓRIO DE CONTRATOS - PMTF', margin, yPosition);
-        
         yPosition += 8;
-        
+
         pdf.setFontSize(10);
         pdf.setFont('helvetica', 'normal');
         pdf.text(`Data de geração: ${today}`, margin, yPosition);
         yPosition += 5;
-        
-        if (searchTerm) {
-          pdf.text(`Termo(s) de busca: "${searchTerm}"`, margin, yPosition);
-          yPosition += 5;
-        }
-        
-        if (anoSelecionado) {
-          pdf.text(`Ano filtrado: ${anoSelecionado}`, margin, yPosition);
-          yPosition += 5;
-        }
-        
+        if (searchTerm) { pdf.text(`Termo(s) de busca: "${searchTerm}"`, margin, yPosition); yPosition += 5; }
+        if (anoSelecionado) { pdf.text(`Ano filtrado: ${anoSelecionado}`, margin, yPosition); yPosition += 5; }
         yPosition += 8;
 
-        // Processar cada card de resultado
         const cards = document.querySelectorAll('#result .card');
-        
+
         for (let i = 0; i < cards.length; i++) {
           const card = cards[i];
           const table = card.querySelector('table');
           const rows = table.querySelectorAll('tbody tr');
-          
-          // Obter os cabeçalhos para mapear as colunas
           const headers = Array.from(table.querySelectorAll('thead th')).map(th => th.textContent.trim());
           const mapeamentoColunas = mapearColunas(headers);
-          
-          // VERIFICAÇÃO DE NOVA PÁGINA (SEM ADICIONAR O TÍTULO "Aba: Página1")
-          if (yPosition > pageHeight - 50) {
-            pdf.addPage();
-            currentPage++;
-            yPosition = margin;
-          }
 
-          // Processar cada linha/contrato
+          if (yPosition > pageHeight - 50) { pdf.addPage(); currentPage++; yPosition = margin; }
+
           pdf.setFont('helvetica', 'normal');
           pdf.setFontSize(10);
-          
+
           for (let j = 0; j < rows.length; j++) {
             const cells = Array.from(rows[j].querySelectorAll('td'));
-            
-            // Verificar se precisa de nova página antes de adicionar novo contrato
-            if (yPosition > pageHeight - 60) {
-              pdf.addPage();
-              currentPage++;
-              yPosition = margin;
-            }
-            
-            // Nº do Contrato (em negrito)
+            if (yPosition > pageHeight - 60) { pdf.addPage(); currentPage++; yPosition = margin; }
+
             if (mapeamentoColunas.contrato !== undefined) {
-              pdf.setFont('helvetica', 'bold');
-              pdf.setFontSize(11);
-              const contratoText = `Nº do Contrato: ${cells[mapeamentoColunas.contrato]?.textContent || ''}`;
-              pdf.text(contratoText, margin, yPosition);
+              pdf.setFont('helvetica', 'bold'); pdf.setFontSize(11);
+              pdf.text(`Nº do Contrato: ${cells[mapeamentoColunas.contrato]?.textContent || ''}`, margin, yPosition);
               yPosition += 6;
             }
-            
-            // Nº da Licitação (em negrito) e datas (normal)
+
             if (mapeamentoColunas.licitacao !== undefined) {
               pdf.setFont('helvetica', 'bold');
               pdf.text('Nº da Licitação:', margin, yPosition);
               pdf.setFont('helvetica', 'normal');
-              const licitacaoX = margin + 28;
-              pdf.text(cells[mapeamentoColunas.licitacao]?.textContent || '', licitacaoX, yPosition);
+              pdf.text(cells[mapeamentoColunas.licitacao]?.textContent || '', margin + 28, yPosition);
             }
-            
-            // Datas na mesma linha
+
             let datasText = '';
-            if (mapeamentoColunas.celebracao !== undefined) {
-              datasText += `Celebração: ${cells[mapeamentoColunas.celebracao]?.textContent || ''} `;
-            }
-            if (mapeamentoColunas.inicio !== undefined) {
-              datasText += `Início: ${cells[mapeamentoColunas.inicio]?.textContent || ''} `;
-            }
-            if (mapeamentoColunas.fim !== undefined) {
-              datasText += `Fim: ${cells[mapeamentoColunas.fim]?.textContent || ''}`;
-            }
-            
-            if (datasText) {
-              const datasX = pageWidth - margin - pdf.getTextWidth(datasText);
-              pdf.text(datasText, datasX, yPosition);
-            }
+            if (mapeamentoColunas.celebracao !== undefined) datasText += `Celebração: ${cells[mapeamentoColunas.celebracao]?.textContent || ''} `;
+            if (mapeamentoColunas.inicio !== undefined) datasText += `Início: ${cells[mapeamentoColunas.inicio]?.textContent || ''} `;
+            if (mapeamentoColunas.fim !== undefined) datasText += `Fim: ${cells[mapeamentoColunas.fim]?.textContent || ''}`;
+            if (datasText) pdf.text(datasText, pageWidth - margin - pdf.getTextWidth(datasText), yPosition);
             yPosition += 6;
-            
-            // Órgão (em negrito)
+
             if (mapeamentoColunas.orgao !== undefined) {
-              pdf.setFont('helvetica', 'bold');
-              pdf.text('Órgão:', margin, yPosition);
+              pdf.setFont('helvetica', 'bold'); pdf.text('Órgão:', margin, yPosition);
               pdf.setFont('helvetica', 'normal');
-              const orgaoText = cells[mapeamentoColunas.orgao]?.textContent || '';
-              const orgaoLines = pdf.splitTextToSize(orgaoText, pageWidth - margin * 2);
-              orgaoLines.forEach((line, index) => {
-                pdf.text(line, margin + 12, yPosition + (index * 5));
-              });
-              yPosition += (orgaoLines.length * 5) + 4;
+              const lines = pdf.splitTextToSize(cells[mapeamentoColunas.orgao]?.textContent || '', pageWidth - margin * 2);
+              lines.forEach((line, idx) => pdf.text(line, margin + 12, yPosition + idx * 5));
+              yPosition += lines.length * 5 + 4;
             }
-            
-            // QT.Adt. (se existir)
+
             if (mapeamentoColunas.qtadt !== undefined && cells[mapeamentoColunas.qtadt]?.textContent) {
-              pdf.setFont('helvetica', 'bold');
-              pdf.text('QT.Adt.:', margin, yPosition);
+              pdf.setFont('helvetica', 'bold'); pdf.text('QT.Adt.:', margin, yPosition);
               pdf.setFont('helvetica', 'normal');
               pdf.text(cells[mapeamentoColunas.qtadt]?.textContent || '', margin + 15, yPosition);
               yPosition += 5;
             }
-            
-            // Favorecido / Contratado (se existir)
+
             if (mapeamentoColunas.favorecido !== undefined) {
-              pdf.setFont('helvetica', 'bold');
-              pdf.text('Favorecido / Contratado:', margin, yPosition);
-              pdf.setFont('helvetica', 'normal');
-              yPosition += 5;
-              
-              const favorecidoText = cells[mapeamentoColunas.favorecido]?.textContent || '';
-              const favorecidoLines = pdf.splitTextToSize(favorecidoText, pageWidth - margin * 2);
-              favorecidoLines.forEach((line, index) => {
-                if (yPosition > pageHeight - 10) {
-                  pdf.addPage();
-                  currentPage++;
-                  yPosition = margin;
-                }
-                pdf.text(line, margin, yPosition + (index * 5));
+              pdf.setFont('helvetica', 'bold'); pdf.text('Favorecido / Contratado:', margin, yPosition);
+              pdf.setFont('helvetica', 'normal'); yPosition += 5;
+              const lines = pdf.splitTextToSize(cells[mapeamentoColunas.favorecido]?.textContent || '', pageWidth - margin * 2);
+              lines.forEach((line, idx) => {
+                if (yPosition > pageHeight - 10) { pdf.addPage(); currentPage++; yPosition = margin; }
+                pdf.text(line, margin, yPosition + idx * 5);
               });
-              yPosition += (favorecidoLines.length * 5) + 4;
+              yPosition += lines.length * 5 + 4;
             }
-            
-            // Objeto do Contrato (se existir)
+
             if (mapeamentoColunas.objeto !== undefined) {
-              pdf.setFont('helvetica', 'bold');
-              pdf.text('Objeto do Contrato:', margin, yPosition);
-              pdf.setFont('helvetica', 'normal');
-              yPosition += 5;
-              
-              const objetoText = cells[mapeamentoColunas.objeto]?.textContent || '';
-              const objetoLines = pdf.splitTextToSize(objetoText, pageWidth - margin * 2);
-              objetoLines.forEach((line, index) => {
-                if (yPosition > pageHeight - 10) {
-                  pdf.addPage();
-                  currentPage++;
-                  yPosition = margin;
-                }
-                pdf.text(line, margin, yPosition + (index * 5));
+              pdf.setFont('helvetica', 'bold'); pdf.text('Objeto do Contrato:', margin, yPosition);
+              pdf.setFont('helvetica', 'normal'); yPosition += 5;
+              const lines = pdf.splitTextToSize(cells[mapeamentoColunas.objeto]?.textContent || '', pageWidth - margin * 2);
+              lines.forEach((line, idx) => {
+                if (yPosition > pageHeight - 10) { pdf.addPage(); currentPage++; yPosition = margin; }
+                pdf.text(line, margin, yPosition + idx * 5);
               });
-              yPosition += (objetoLines.length * 5) + 12;
+              yPosition += lines.length * 5 + 12;
             }
-            
-            // Linha separadora entre contratos
+
             if (j < rows.length - 1 && yPosition < pageHeight - 15) {
               pdf.setDrawColor(200, 200, 200);
               pdf.line(margin, yPosition - 3, pageWidth - margin, yPosition - 3);
               yPosition += 5;
             }
           }
-          
-          // Espaço entre abas
           yPosition += 10;
         }
-        
-        // Adicionar rodapé com número da página em todas as páginas
+
         const totalPages = pdf.internal.getNumberOfPages();
         for (let i = 1; i <= totalPages; i++) {
           pdf.setPage(i);
@@ -764,16 +640,13 @@
           pdf.setTextColor(128, 128, 128);
           pdf.text(
             `Página ${i} de ${totalPages} - Relatório gerado em ${today} por Sérgio Carneiro`,
-            pageWidth / 2,
-            pageHeight - 10,
-            { align: 'center' }
+            pageWidth / 2, pageHeight - 10, { align: 'center' }
           );
         }
 
-        // Salvar PDF
         const fileName = `contratos_pmtf_${searchTerm ? searchTerm.replace(/[^a-z0-9]/gi, '_') : 'todos'}_${new Date().toISOString().slice(0,10)}.pdf`;
         pdf.save(fileName);
-        
+
       } catch (error) {
         console.error('Erro ao gerar PDF:', error);
         alert('Erro ao gerar PDF. Tente novamente.');
@@ -782,16 +655,15 @@
       }
     }
 
-    // Função principal de busca - CORRIGIDA
     function search() {
       const termo = document.getElementById('searchTerm').value.trim().toLowerCase();
       const resultDiv = document.getElementById('result');
       resultDiv.innerHTML = '';
 
       if (jsonData.length === 0) {
-        resultDiv.innerHTML = 
+        resultDiv.innerHTML =
           `<div class="alert alert-warning" role="alert">
-            <i class="bi bi-exclamation-triangle"></i> Nenhum dado carregado. 
+            <i class="bi bi-exclamation-triangle"></i> Nenhum dado carregado.
             <button onclick="carregarJSON()" class="btn btn-sm btn-outline-primary ms-2">Carregar Dados</button>
           </div>`;
         toggleExportButton(false);
@@ -799,7 +671,7 @@
       }
 
       if (!termo && !anoSelecionado) {
-        resultDiv.innerHTML = 
+        resultDiv.innerHTML =
           `<div class="alert alert-info" role="alert">
             <i class="bi bi-info-circle"></i> Digite um termo ou selecione um ano para buscar.
           </div>`;
@@ -811,40 +683,30 @@
 
       jsonData.forEach((aba) => {
         const mapeamentoColunas = mapearColunas(aba.colunas);
-        
+
         let correspondencias;
 
         if (anoSelecionado && !termo) {
           correspondencias = aba.linhas.filter((linha) => {
             if (mapeamentoColunas.contrato === undefined) return false;
-            const contrato = linha[mapeamentoColunas.contrato] || '';
-            const anoContrato = extrairAnoDoContrato(contrato);
-            return anoContrato === anoSelecionado;
+            return extrairAnoDoContrato(linha[mapeamentoColunas.contrato] || '') === anoSelecionado;
           });
         } else {
           correspondencias = aba.linhas.filter((linha) => {
             const contrato = mapeamentoColunas.contrato !== undefined ? (linha[mapeamentoColunas.contrato] || '') : '';
-            const anoContrato = extrairAnoDoContrato(contrato);
-            const contemAno = !anoSelecionado || anoContrato === anoSelecionado;
-            const contemTermo = !termo || linha.some(campo => 
-              campo && campo.toString().toLowerCase().includes(termo)
-            );
+            const contemAno = !anoSelecionado || extrairAnoDoContrato(contrato) === anoSelecionado;
+            const contemTermo = !termo || linha.some(campo => campo && campo.toString().toLowerCase().includes(termo));
             return contemAno && contemTermo;
           });
         }
 
         if (correspondencias.length > 0) {
-          resultados.push({ 
-            aba: aba.aba, 
-            colunas: aba.colunas, 
-            resultados: correspondencias,
-            mapeamentoColunas: mapeamentoColunas
-          });
+          resultados.push({ aba: aba.aba, colunas: aba.colunas, resultados: correspondencias, mapeamentoColunas });
         }
       });
 
       if (resultados.length === 0) {
-        resultDiv.innerHTML = 
+        resultDiv.innerHTML =
           `<div class="alert alert-info" role="alert">
             <i class="bi bi-search"></i> Nenhum resultado encontrado.
             ${termo ? `Para o termo: "${termo}"` : ''}
@@ -854,7 +716,6 @@
         return;
       }
 
-      // Gera os resultados
       resultados.forEach((item) => {
         let cardHTML = `
           <div class="card">
@@ -865,126 +726,53 @@
             <div class="card-body p-2">
               <div class="table-responsive">
                 <table class="table table-bordered table-hover mb-0">
-                  <thead>
-                    <tr>
-        `;
-        
-        // Cabeçalhos da tabela com classes de largura
-        if (item.mapeamentoColunas.contrato !== undefined) {
-          cardHTML += `<th class="col-numero-contrato">${escapeHtml(item.colunas[item.mapeamentoColunas.contrato])}</th>`;
-        }
-        if (item.mapeamentoColunas.licitacao !== undefined) {
-          cardHTML += `<th class="col-licitacao">${escapeHtml(item.colunas[item.mapeamentoColunas.licitacao])}</th>`;
-        }
-        if (item.mapeamentoColunas.celebracao !== undefined) {
-          cardHTML += `<th class="col-celebracao">${escapeHtml(item.colunas[item.mapeamentoColunas.celebracao])}</th>`;
-        }
-        if (item.mapeamentoColunas.inicio !== undefined) {
-          cardHTML += `<th class="col-inicio">${escapeHtml(item.colunas[item.mapeamentoColunas.inicio])}</th>`;
-        }
-        if (item.mapeamentoColunas.fim !== undefined) {
-          cardHTML += `<th class="col-fim">${escapeHtml(item.colunas[item.mapeamentoColunas.fim])}</th>`;
-        }
-        if (item.mapeamentoColunas.orgao !== undefined) {
-          cardHTML += `<th class="col-orgao">${escapeHtml(item.colunas[item.mapeamentoColunas.orgao])}</th>`;
-        }
-        // NOVA COLUNA QT.Adt.
-        if (item.mapeamentoColunas.qtadt !== undefined) {
-          cardHTML += `<th class="col-qtadt">${escapeHtml(item.colunas[item.mapeamentoColunas.qtadt])}</th>`;
-        }
-        // NOVA COLUNA Favorecido / Contratado
-        if (item.mapeamentoColunas.favorecido !== undefined) {
-          cardHTML += `<th class="col-favorecido">${escapeHtml(item.colunas[item.mapeamentoColunas.favorecido])}</th>`;
-        }
-        // COLUNA Objeto do Contrato
-        if (item.mapeamentoColunas.objeto !== undefined) {
-          cardHTML += `<th class="col-objeto">${escapeHtml(item.colunas[item.mapeamentoColunas.objeto])}</th>`;
-        }
-        
-        cardHTML += `
-                    </tr>
-                  </thead>
-                  <tbody>
-        `;
+                  <thead><tr>`;
 
-        // Linhas da tabela
+        if (item.mapeamentoColunas.contrato !== undefined) cardHTML += `<th class="col-numero-contrato">${escapeHtml(item.colunas[item.mapeamentoColunas.contrato])}</th>`;
+        if (item.mapeamentoColunas.licitacao !== undefined) cardHTML += `<th class="col-licitacao">${escapeHtml(item.colunas[item.mapeamentoColunas.licitacao])}</th>`;
+        if (item.mapeamentoColunas.celebracao !== undefined) cardHTML += `<th class="col-celebracao">${escapeHtml(item.colunas[item.mapeamentoColunas.celebracao])}</th>`;
+        if (item.mapeamentoColunas.inicio !== undefined) cardHTML += `<th class="col-inicio">${escapeHtml(item.colunas[item.mapeamentoColunas.inicio])}</th>`;
+        if (item.mapeamentoColunas.fim !== undefined) cardHTML += `<th class="col-fim">${escapeHtml(item.colunas[item.mapeamentoColunas.fim])}</th>`;
+        if (item.mapeamentoColunas.orgao !== undefined) cardHTML += `<th class="col-orgao">${escapeHtml(item.colunas[item.mapeamentoColunas.orgao])}</th>`;
+        if (item.mapeamentoColunas.qtadt !== undefined) cardHTML += `<th class="col-qtadt">${escapeHtml(item.colunas[item.mapeamentoColunas.qtadt])}</th>`;
+        if (item.mapeamentoColunas.favorecido !== undefined) cardHTML += `<th class="col-favorecido">${escapeHtml(item.colunas[item.mapeamentoColunas.favorecido])}</th>`;
+        if (item.mapeamentoColunas.objeto !== undefined) cardHTML += `<th class="col-objeto">${escapeHtml(item.colunas[item.mapeamentoColunas.objeto])}</th>`;
+
+        cardHTML += `</tr></thead><tbody>`;
+
         item.resultados.forEach((res) => {
           cardHTML += '<tr>';
-          
-          if (item.mapeamentoColunas.contrato !== undefined) {
-            cardHTML += `<td class="col-numero-contrato">${highlightTerm(res[item.mapeamentoColunas.contrato], termo)}</td>`;
-          }
-          if (item.mapeamentoColunas.licitacao !== undefined) {
-            cardHTML += `<td class="col-licitacao">${highlightTerm(res[item.mapeamentoColunas.licitacao], termo)}</td>`;
-          }
-          if (item.mapeamentoColunas.celebracao !== undefined) {
-            cardHTML += `<td class="col-celebracao">${highlightTerm(res[item.mapeamentoColunas.celebracao], termo)}</td>`;
-          }
-          if (item.mapeamentoColunas.inicio !== undefined) {
-            cardHTML += `<td class="col-inicio">${highlightTerm(res[item.mapeamentoColunas.inicio], termo)}</td>`;
-          }
-          if (item.mapeamentoColunas.fim !== undefined) {
-            cardHTML += `<td class="col-fim">${highlightTerm(res[item.mapeamentoColunas.fim], termo)}</td>`;
-          }
-          if (item.mapeamentoColunas.orgao !== undefined) {
-            cardHTML += `<td class="col-orgao">${highlightTerm(res[item.mapeamentoColunas.orgao], termo)}</td>`;
-          }
-          // NOVA COLUNA QT.Adt.
-          if (item.mapeamentoColunas.qtadt !== undefined) {
-            cardHTML += `<td class="col-qtadt">${highlightTerm(res[item.mapeamentoColunas.qtadt], termo)}</td>`;
-          }
-          // NOVA COLUNA Favorecido / Contratado
-          if (item.mapeamentoColunas.favorecido !== undefined) {
-            cardHTML += `<td class="col-favorecido">${highlightTerm(res[item.mapeamentoColunas.favorecido], termo)}</td>`;
-          }
-          // COLUNA Objeto do Contrato
-          if (item.mapeamentoColunas.objeto !== undefined) {
-            cardHTML += `<td class="col-objeto">${highlightTerm(res[item.mapeamentoColunas.objeto], termo)}</td>`;
-          }
-          
+          if (item.mapeamentoColunas.contrato !== undefined) cardHTML += `<td class="col-numero-contrato">${highlightTerm(res[item.mapeamentoColunas.contrato], termo)}</td>`;
+          if (item.mapeamentoColunas.licitacao !== undefined) cardHTML += `<td class="col-licitacao">${highlightTerm(res[item.mapeamentoColunas.licitacao], termo)}</td>`;
+          if (item.mapeamentoColunas.celebracao !== undefined) cardHTML += `<td class="col-celebracao">${highlightTerm(res[item.mapeamentoColunas.celebracao], termo)}</td>`;
+          if (item.mapeamentoColunas.inicio !== undefined) cardHTML += `<td class="col-inicio">${highlightTerm(res[item.mapeamentoColunas.inicio], termo)}</td>`;
+          if (item.mapeamentoColunas.fim !== undefined) cardHTML += `<td class="col-fim">${highlightTerm(res[item.mapeamentoColunas.fim], termo)}</td>`;
+          if (item.mapeamentoColunas.orgao !== undefined) cardHTML += `<td class="col-orgao">${highlightTerm(res[item.mapeamentoColunas.orgao], termo)}</td>`;
+          if (item.mapeamentoColunas.qtadt !== undefined) cardHTML += `<td class="col-qtadt">${highlightTerm(res[item.mapeamentoColunas.qtadt], termo)}</td>`;
+          if (item.mapeamentoColunas.favorecido !== undefined) cardHTML += `<td class="col-favorecido">${highlightTerm(res[item.mapeamentoColunas.favorecido], termo)}</td>`;
+          if (item.mapeamentoColunas.objeto !== undefined) cardHTML += `<td class="col-objeto">${highlightTerm(res[item.mapeamentoColunas.objeto], termo)}</td>`;
           cardHTML += '</tr>';
         });
 
-        cardHTML += `
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        `;
+        cardHTML += `</tbody></table></div></div></div>`;
         resultDiv.innerHTML += cardHTML;
       });
 
-      // Resumo da busca
+      const totalEncontrados = resultados.reduce((t, item) => t + item.resultados.length, 0);
       resultDiv.innerHTML += `
         <div class="alert alert-success mt-3" role="alert">
-          <i class="bi bi-check-circle"></i> 
-          🔎 ${resultados.reduce((total, item) => total + item.resultados.length, 0)} registro(s) encontrado(s) em ${resultados.length} aba(s)
+          <i class="bi bi-check-circle"></i>
+          🔎 ${totalEncontrados} registro(s) encontrado(s) em ${resultados.length} aba(s)
           ${anoSelecionado ? ' para o ano ' + anoSelecionado : ''}
-          ${termo ? ' com o termo "' + termo + '"' : ''}.
-        </div>
-      `;
+          ${termo ? ` com o termo "${termo}"` : ''}.
+        </div>`;
 
       toggleExportButton(true);
     }
 
-    // Event Listeners
     document.addEventListener('DOMContentLoaded', () => {
-      console.log('🚀 Inicializando aplicação...');
-      
-      const yearButtons = document.querySelectorAll('.year-btn');
-      yearButtons.forEach(btn => {
-        btn.addEventListener('click', function() {
-          const year = this.getAttribute('data-year');
-          toggleYear(year);
-        });
-      });
-
       document.getElementById('searchTerm').addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-          e.preventDefault();
-          search();
-        }
+        if (e.key === 'Enter') { e.preventDefault(); search(); }
       });
 
       const btnTopo = document.getElementById('btnTopo');
@@ -997,11 +785,9 @@
       carregarJSON();
     });
 
-    // Alternar tema
     function toggleTheme() {
       document.body.classList.toggle('dark-mode');
       const themeIcon = document.querySelector('.theme-toggle i');
-      
       if (document.body.classList.contains('dark-mode')) {
         document.body.style.backgroundColor = '#212529';
         document.body.style.color = '#fff';
